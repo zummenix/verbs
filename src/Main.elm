@@ -189,10 +189,14 @@ isAnswerValid : Model -> Bool
 isAnswerValid model =
     (separate (Maybe.withDefault "" model.current)) == (separate model.textInput)
 
-separate : String -> List String
+separate : String -> List (List String)
 separate text =
-    List.map String.trim (String.split "," text)
+    List.map separateSlash (String.split "," text)
 
-infinitive: List String -> String
+separateSlash: String -> List String
+separateSlash text =
+    List.sort (List.map String.trim (String.split "/" text))
+
+infinitive: List (List String) -> String
 infinitive words =
-    Maybe.withDefault "" (List.head words)
+    Maybe.withDefault "" (List.head (Maybe.withDefault [] (List.head words)))
