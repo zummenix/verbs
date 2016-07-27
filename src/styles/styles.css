@@ -5,6 +5,13 @@ div.container {
     min-width: 320px;
 }
 
+div.remaining {
+    margin: 10px;
+    text-align: left;
+    color: gray;
+    font-size: 0.8em;
+}
+
 div.position {
     margin: 10px;
     text-align: center;

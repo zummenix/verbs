@@ -86,6 +86,7 @@ view model =
             in
                 div [class "container"]
                     ([ css "styles/styles.css"
+                    , div [class "remaining"] [text ("Remaining verbs to learn: " ++ (remainingText model))]
                     , div [class "position"] [text (positionText model)]
                     , div [class "question"] [text (current |> separate |> infinitive)]
                     , div [class "answer"]
@@ -180,6 +181,10 @@ subscriptions model =
 positionText : Model -> String
 positionText model =
     (model.position |> toString) ++ " of " ++ (numberOfQuestions model |> toString)
+
+remainingText : Model -> String
+remainingText model =
+    ((List.length model.verbs) + (List.length model.repetitions)) |> toString
 
 numberOfQuestions : Model -> Int
 numberOfQuestions model =
