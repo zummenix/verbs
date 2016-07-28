@@ -69,7 +69,7 @@ initWithVerbs verbs =
             , state = Active
             }
     in
-        (model, Cmd.none)
+        model ! []
 
 view : Model -> Html Msg
 view model =
@@ -96,7 +96,7 @@ view model =
         Nothing ->
             div [class "container"]
                 [ css "styles/styles.css"
-                , div [class "finish"] [text "You are Finished!"]
+                , div [class "finish"] [text "Congratulations!"]
                 ]
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -106,13 +106,13 @@ update msg model =
             initWithVerbs (Verbs.shuffled seed)
 
         UpdateTextInput text ->
-            ({ model | textInput = text }, Cmd.none)
+            { model | textInput = text } ! []
 
         ValidateInput ->
-            (nextVerb model, Cmd.none)
+            nextVerb model ! []
 
         NoOp ->
-            (model, Cmd.none)
+            model ! []
 
 nextVerb : Model -> Model
 nextVerb model =
