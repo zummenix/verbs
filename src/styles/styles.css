@@ -1,78 +1,55 @@
 
-div.container {
+.container {
     margin: auto;
     max-width: 500px;
     min-width: 320px;
 }
 
-div.remaining {
+.item {
     margin: 10px;
+}
+
+.remaining {
     text-align: left;
     color: gray;
     font-size: 0.8em;
 }
 
-div.position {
-    margin: 10px;
+.position {
     text-align: center;
     color: gray;
     font-size: 0.8em;
 }
 
-div.question {
-    margin-top: 0px;
-    margin-bottom: 5px;
-    margin-left: 10px;
-    margin-right: 10px;
+.question {
     text-align: center;
     font-size: 1.5em;
 }
 
-div.answer {
-    margin-top: 0px;
-    margin-bottom: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
-}
-
-input.answer {
+.field {
     padding: 5px;
     box-sizing: border-box;
-    position: relative;
     width: 100%;
     text-align: center;
     font-size: 1.2em;
-}
-
-input.border {
+    outline: none;
     border-style: solid;
     border-radius: 4px;
-    outline: none;
-}
-
-input:focus {
-    border-width: 2px;
-}
-
-input.border_normal {
+    border-width: 1px;
     border-color: lightgray;
 }
 
-input.border_error {
+.border_red {
     border-color: red;
 }
 
-div.correct_answer {
-    margin-top: 0px;
-    margin-bottom: 10px;
-    margin-left: 10px;
-    margin-right: 10px;
+.correct_answer {
     text-align: center;
     font-size: 1.2em;
     color: green;
 }
 
-div.finish {
+.finish {
     padding-top: 40px;
     padding-bottom: 40px;
     width: 100%;

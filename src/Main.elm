@@ -81,15 +81,15 @@ view model =
                     Error -> [div [class "correct_answer"] [text current]]
 
                 inputClasses = case model.state of
-                    Active -> "answer border border_normal"
-                    Error -> "answer border border_error"
+                    Active -> "field"
+                    Error -> "field border_red"
             in
                 div [class "container"]
                     ([ css "styles/styles.css"
-                    , div [class "remaining"] [text ("Remaining verbs to learn: " ++ (remainingText model))]
-                    , div [class "position"] [text (positionText model)]
-                    , div [class "question"] [text (current |> separate |> infinitive)]
-                    , div [class "answer"]
+                    , div [class "item remaining"] [text ("Remaining verbs to learn: " ++ (remainingText model))]
+                    , div [class "item position"] [text (positionText model)]
+                    , div [class "item question"] [text (current |> separate |> infinitive)]
+                    , div [class "item"]
                         [ input [ class inputClasses, onInput UpdateTextInput, onEnter ValidateInput, value model.textInput] []
                         ]
                     ] ++ rightAnswer)
