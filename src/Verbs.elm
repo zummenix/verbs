@@ -4,10 +4,13 @@ import Array
 import Random
 import Random.Array
 
+
 shuffled : Random.Seed -> List String
 shuffled seed =
     case (Random.step (Random.Array.shuffle (Array.fromList ordered)) seed) of
-        (array, _) -> Array.toList array
+        ( array, _ ) ->
+            Array.toList array
+
 
 ordered : List String
 ordered =
