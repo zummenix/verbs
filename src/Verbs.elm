@@ -7,9 +7,10 @@ import Random.Array
 
 shuffled : Random.Seed -> List String
 shuffled seed =
-    case (Random.step (Random.Array.shuffle (Array.fromList ordered)) seed) of
-        ( array, _ ) ->
-            Array.toList array
+    seed
+        |> Random.step (Array.fromList ordered |> Random.Array.shuffle)
+        |> fst
+        |> Array.toList
 
 
 ordered : List String
