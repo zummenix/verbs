@@ -1,4 +1,4 @@
-module TextField exposing (Msg, init, view, update)
+module TextField exposing (Msg, State, init, view, update)
 
 import Html.App
 import Html exposing (div, text, p, input, Html, Attribute)
@@ -9,7 +9,7 @@ import Json.Decode
 
 main : Program Never
 main =
-    Html.App.program { init = init, view = view, update = update, subscriptions = \_ -> Sub.none }
+    Html.App.program { init = init, view = view Correct, update = update, subscriptions = \_ -> Sub.none }
 
 
 type State
@@ -19,29 +19,27 @@ type State
 
 
 type alias Model =
-    { input : String
-    , state : State
-    }
+    { input : String }
 
 
 type Msg
-    = NoOp
-    | Update String
+    = Update String
+    | KeyUp Int
 
 
 init : ( Model, Cmd Msg )
 init =
-    { input = "", state = Normal } ! []
+    { input = "" } ! []
 
 
-view : Model -> Html Msg
-view model =
+view : State -> Model -> Html Msg
+view state model =
     div
         [ style
             [ ( "margin", "10px" )
             , ( "padding", "5px" )
-            , ( "background-color", backgroundColor model.state )
-            , ( "border-color", borderColor model.state )
+            , ( "background-color", backgroundColor state )
+            , ( "border-color", borderColor state )
             , ( "box-shadow", "inset 0px 1px 3px 3px rgba(0,0,0,0.02)" )
             , ( "border-style", "solid" )
             , ( "border-radius", "4px" )
@@ -61,6 +59,7 @@ view model =
                 , ( "font-size", "1.2em" )
                 ]
             , onInput Update
+            , onKeyUp KeyUp
             , value model.input
             ]
             []
@@ -87,29 +86,22 @@ borderColor state =
             "lightgray"
 
         Correct ->
-            "rgb(0,240,0)"
+            "rgb(0,220,0)"
 
         Wrong ->
-            "rgb(240,0,0)"
+            "rgb(220,0,0)"
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        NoOp ->
-            model ! []
-
         Update input ->
             { model | input = input } ! []
 
+        KeyUp _ ->
+            model ! []
 
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        tagger code =
-            if code == 13 then
-                msg
-            else
-                NoOp
-    in
-        on "keydown" (Json.Decode.map tagger keyCode)
+
+onKeyUp : (Int -> Msg) -> Attribute Msg
+onKeyUp tagger =
+    on "keyup" (Json.Decode.map tagger keyCode)
