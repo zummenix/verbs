@@ -1,15 +1,9 @@
-module TextField exposing (Msg, State, init, view, update)
+module TextField exposing (Config, State(..), view)
 
-import Html.App
 import Html exposing (div, text, p, input, Html, Attribute)
 import Html.Events exposing (onInput, on, keyCode)
 import Html.Attributes exposing (value, style)
 import Json.Decode
-
-
-main : Program Never
-main =
-    Html.App.program { init = init, view = view Correct, update = update, subscriptions = \_ -> Sub.none }
 
 
 type State
@@ -18,22 +12,14 @@ type State
     | Wrong
 
 
-type alias Model =
-    { input : String }
+type alias Config msg =
+    { onInput : String -> msg
+    , onKeyUp : Int -> msg
+    }
 
 
-type Msg
-    = Update String
-    | KeyUp Int
-
-
-init : ( Model, Cmd Msg )
-init =
-    { input = "" } ! []
-
-
-view : State -> Model -> Html Msg
-view state model =
+view : Config msg -> State -> String -> Html msg
+view config state text =
     div
         [ style
             [ ( "margin", "10px" )
@@ -58,12 +44,13 @@ view state model =
                 , ( "color", "rgb(44,44,44)" )
                 , ( "font-size", "1.2em" )
                 ]
-            , onInput Update
-            , onKeyUp KeyUp
-            , value model.input
+            , onInput config.onInput
+            , onKeyUp config.onKeyUp
+            , value text
             ]
             []
         ]
+
 
 
 backgroundColor : State -> String
@@ -92,16 +79,6 @@ borderColor state =
             "rgb(220,0,0)"
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        Update input ->
-            { model | input = input } ! []
-
-        KeyUp _ ->
-            model ! []
-
-
-onKeyUp : (Int -> Msg) -> Attribute Msg
+onKeyUp : (Int -> msg) -> Attribute msg
 onKeyUp tagger =
     on "keyup" (Json.Decode.map tagger keyCode)
