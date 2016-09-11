@@ -2,55 +2,76 @@ module Game exposing (..)
 
 
 type alias Game =
-    { verbs : List String
+    { questions : List String
+    , roundQuestions : List String
+    , roundPosition : Int
     }
 
 
 initGame : List String -> Game
-initGame verbs =
-    { verbs = verbs }
-
-
-nextRound : Game -> ( Game, Round )
-nextRound game =
+initGame questions =
     let
-        verbs =
-            List.take maxNumberOfQuestions game.verbs
+        game =
+            { questions = questions
+            , roundQuestions = []
+            , roundPosition = 0
+            }
     in
-        ( initGame <| List.drop maxNumberOfQuestions game.verbs, initRound verbs )
+        nextRoundQuestion game
 
 
-type alias Round =
-    { verbs : List String
-    , position : Int
-    }
+currentRoundQuestion : Game -> Maybe String
+currentRoundQuestion game =
+    List.head game.roundQuestions
 
 
-initRound : List String -> Round
-initRound verbs =
-    { verbs = verbs, position = 0 }
+currentRoundPosition : Game -> Int
+currentRoundPosition game =
+    game.roundPosition
 
 
-currentQuestion : Round -> Maybe String
-currentQuestion round =
-    List.head round.verbs
+nextRoundQuestion : Game -> Game
+nextRoundQuestion game =
+    let
+        roundQuestions =
+            List.drop 1 game.roundQuestions
+    in
+        case List.head roundQuestions of
+            Just _ ->
+                { game | roundQuestions = roundQuestions, roundPosition = game.roundPosition + 1 }
+
+            Nothing ->
+                let
+                    allQuestions =
+                        roundQuestions ++ game.questions
+
+                    roundQuestions =
+                        List.take maxNumberOfQuestions allQuestions
+
+                    questions =
+                        List.drop maxNumberOfQuestions allQuestions
+                in
+                    { questions = questions
+                    , roundQuestions = roundQuestions
+                    , roundPosition = 0
+                    }
 
 
-currentPosition : Round -> Int
-currentPosition round =
-    round.position + 1
+numberOfRemainingRoundQuestions : Game -> Int
+numberOfRemainingRoundQuestions game =
+    List.length game.roundQuestions
 
 
-numberOfQuestions : Round -> Int
-numberOfQuestions round =
-    List.length round.verbs + round.position
+numberOfRoundQuestions : Game -> Int
+numberOfRoundQuestions game =
+    List.length game.roundQuestions + game.roundPosition
 
 
-numberOfRemainingQuestions : Round -> Game -> Int
-numberOfRemainingQuestions round game =
-    (List.length round.verbs) + (List.length game.verbs)
+numberOfRemainingQuestions : Game -> Int
+numberOfRemainingQuestions game =
+    (List.length game.questions) + (List.length game.roundQuestions)
 
 
 maxNumberOfQuestions : Int
 maxNumberOfQuestions =
-    7
+    5
