@@ -1,14 +1,11 @@
 module Main exposing (..)
 
 import Html.App
-import Html exposing (div, text, form, input, node, Html, Attribute)
-import Html.Events exposing (onInput, on, keyCode)
-import Html.Attributes exposing (placeholder, value, rel, href, class, style)
-import Json.Decode as Json
+import Html exposing (div, text, Html, Attribute)
+import Html.Attributes exposing (style)
 import Time
 import Random
 import Task
-import String
 import Verbs
 import TextField
 import Game exposing (Game)
@@ -170,7 +167,7 @@ fields game =
         Just question ->
             let
                 field i text =
-                    if i == 0 then
+                    if i == 0 || text == "-" then
                         Known text
                     else
                         Unknown ""
