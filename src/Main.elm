@@ -3,7 +3,7 @@ module Main exposing (..)
 import Html.App
 import Html exposing (div, text, form, input, node, Html, Attribute)
 import Html.Events exposing (onInput, on, keyCode)
-import Html.Attributes exposing (placeholder, value, rel, href, class)
+import Html.Attributes exposing (placeholder, value, rel, href, class, style)
 import Json.Decode as Json
 import Time
 import Random
@@ -11,24 +11,8 @@ import Task
 import String
 import Verbs
 import TextField
-import Game
-
-
-css : String -> Html a
-css path =
-    node "link" [ rel "stylesheet", href path ] []
-
-
-onEnter : Msg -> Attribute Msg
-onEnter msg =
-    let
-        tagger code =
-            if code == 13 then
-                msg
-            else
-                NoOp
-    in
-        on "keydown" (Json.map tagger keyCode)
+import Game exposing (Game)
+import Question
 
 
 main : Program Never
@@ -41,220 +25,162 @@ main =
         }
 
 
-type State
-    = Active
-    | Error
+type Model
+    = Loading
+    | Ready GameState
+    | Finished
 
 
-type alias Model =
-    { verbs : List String
-    , repetitions : List String
-    , current : Maybe String
-    , textInput : String
-    , position : Int
-    , state : State
+type alias GameState =
+    { game : Game
+    , fields : List Field
     }
+
+
+type Field
+    = Known String
+    | Unknown String
 
 
 type Msg
     = InitialSeed Random.Seed
-    | UpdateTextInput String
-    | ValidateInput
+    | OnInput Int String
     | NoOp
 
 
 init : ( Model, Cmd Msg )
 init =
-    let
-        model =
-            { verbs = []
-            , repetitions = []
-            , current = Nothing
-            , textInput = ""
-            , position = 1
-            , state = Active
-            }
-    in
-        ( model, Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now )
-
-
-initWithVerbs : List String -> ( Model, Cmd Msg )
-initWithVerbs verbs =
-    let
-        model =
-            { verbs = verbs
-            , repetitions = []
-            , current = List.head verbs
-            , textInput = ""
-            , position = 1
-            , state = Active
-            }
-    in
-        model ! []
+    ( Loading, Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now )
 
 
 view : Model -> Html Msg
 view model =
-    case model.current of
-        Just current ->
-            let
-                rightAnswer =
-                    case model.state of
-                        Active ->
-                            []
+    case model of
+        Loading ->
+            viewPhrase "Loading..."
 
-                        Error ->
-                            [ div [ class "correct_answer" ] [ text current ] ]
+        Ready gameState ->
+            viewGame gameState
 
-                inputClasses =
-                    case model.state of
-                        Active ->
-                            "field"
+        Finished ->
+            viewPhrase "Congratulations!"
 
-                        Error ->
-                            "field border_red"
-            in
-                div [ class "container" ]
-                    ([ css "styles/styles.css"
-                     , div [ class "item remaining" ] [ text ("Remaining verbs to learn: " ++ (remainingText model)) ]
-                     , div [ class "item position" ] [ text (positionText model) ]
-                     , div [ class "item question" ] [ text (current |> separate |> infinitive) ]
-                     , div [ class "item" ]
-                        [ input [ class inputClasses, onInput UpdateTextInput, onEnter ValidateInput, value model.textInput ] []
-                        ]
-                     ]
-                        ++ rightAnswer
-                    )
 
-        Nothing ->
-            div [ class "container" ]
-                [ css "styles/styles.css"
-                , div [ class "finish" ] [ text "Congratulations!" ]
+viewGame : GameState -> Html Msg
+viewGame gameState =
+    div
+        [ style
+            [ ( "margin", "auto" )
+            , ( "width", "280px" )
+            , ( "height", "auto" )
+            ]
+        ]
+        (List.indexedMap viewField gameState.fields)
+
+
+viewField : Int -> Field -> Html Msg
+viewField index field =
+    case field of
+        Known verb ->
+            div
+                [ style
+                    [ ( "margin-top", "20px" )
+                    , ( "margin-bottom", "20px" )
+                    , ( "margin-left", "10px" )
+                    , ( "margin-right", "10px" )
+                    , ( "padding", "15px" )
+                    , ( "background-color", "rgb(250,241,192)" )
+                    , ( "border-color", "lightgray" )
+                    , ( "border-style", "solid" )
+                    , ( "border-radius", "4px" )
+                    , ( "border-width", "1px" )
+                    , ( "text-align", "center" )
+                    , ( "color", "rgb(44,44,44)" )
+                    , ( "font-size", "1.2em" )
+                    , ( "font-family", "sans-serif" )
+                    ]
                 ]
+                [ text verb ]
+
+        Unknown text ->
+            TextField.view { onInput = (OnInput index), onKeyUp = \_ -> NoOp } TextField.Normal text
+
+
+viewPhrase : String -> Html Msg
+viewPhrase phrase =
+    div
+        [ style
+            [ ( "margin", "auto" )
+            , ( "width", "240px" )
+            , ( "height", "auto" )
+            ]
+        ]
+        [ div
+            [ style
+                [ ( "padding-top", "100%" )
+                , ( "padding-bottom", "100%" )
+                , ( "text-align", "center" )
+                , ( "font-family", "sans-serif" )
+                , ( "font-size", "2em" )
+                , ( "color", "gray" )
+                ]
+            ]
+            [ text phrase ]
+        ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         InitialSeed seed ->
-            initWithVerbs (Verbs.shuffled seed)
+            let
+                game =
+                    Game.initGame (Verbs.shuffled seed)
+            in
+                Ready { game = game, fields = fields game } ! []
 
-        UpdateTextInput text ->
-            { model | textInput = text } ! []
+        OnInput index text ->
+            case model of
+                Ready gameState ->
+                    let
+                        updateField i field =
+                            if i == index then
+                                Unknown text
+                            else
+                                field
 
-        ValidateInput ->
-            nextVerb model ! []
+                        newFields =
+                            List.indexedMap updateField gameState.fields
+                    in
+                        Ready { game = gameState.game, fields = newFields } ! []
+
+                Loading ->
+                    model ! []
+
+                Finished ->
+                    model ! []
 
         NoOp ->
             model ! []
 
 
-nextVerb : Model -> Model
-nextVerb model =
-    if isAnswerValid model then
-        case model.state of
-            Active ->
-                if model.position == numberOfQuestions model then
-                    let
-                        verbs =
-                            model.repetitions ++ (Maybe.withDefault [] (List.tail model.verbs))
-                    in
-                        { model
-                            | verbs = verbs
-                            , repetitions = []
-                            , current = List.head verbs
-                            , textInput = ""
-                            , position = 1
-                        }
-                else
-                    let
-                        verbs =
-                            Maybe.withDefault [] (List.tail model.verbs)
-                    in
-                        { model
-                            | verbs = verbs
-                            , current = List.head verbs
-                            , textInput = ""
-                            , position = model.position + 1
-                        }
+fields : Game -> List Field
+fields game =
+    case Game.currentRoundQuestion game of
+        Just question ->
+            let
+                field i text =
+                    if i == 0 then
+                        Known text
+                    else
+                        Unknown ""
+            in
+                List.indexedMap field (List.map (Maybe.withDefault "") (List.map List.head (Question.words question)))
 
-            Error ->
-                if model.position == numberOfQuestions model then
-                    let
-                        repetitions =
-                            model.repetitions ++ (Maybe.withDefault [] (Maybe.map (\w -> [ w ]) model.current))
-
-                        verbs =
-                            repetitions ++ (Maybe.withDefault [] (List.tail model.verbs))
-                    in
-                        { model
-                            | verbs = verbs
-                            , repetitions = []
-                            , current = List.head verbs
-                            , textInput = ""
-                            , position = 1
-                            , state = Active
-                        }
-                else
-                    let
-                        repetitions =
-                            model.repetitions ++ (Maybe.withDefault [] (Maybe.map (\w -> [ w ]) model.current))
-
-                        verbs =
-                            Maybe.withDefault [] (List.tail model.verbs)
-                    in
-                        { model
-                            | verbs = verbs
-                            , repetitions = repetitions
-                            , current = List.head verbs
-                            , textInput = ""
-                            , position = model.position + 1
-                            , state = Active
-                        }
-    else
-        case model.state of
-            Active ->
-                { model | state = Error }
-
-            Error ->
-                model
+        Nothing ->
+            []
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.none
-
-
-positionText : Model -> String
-positionText model =
-    (model.position |> toString) ++ " of " ++ (numberOfQuestions model |> toString)
-
-
-remainingText : Model -> String
-remainingText model =
-    ((List.length model.verbs) + (List.length model.repetitions)) |> toString
-
-
-numberOfQuestions : Model -> Int
-numberOfQuestions model =
-    min 7 (List.length model.verbs)
-
-
-isAnswerValid : Model -> Bool
-isAnswerValid model =
-    (separate (Maybe.withDefault "" model.current)) == (separate model.textInput)
-
-
-separate : String -> List (List String)
-separate text =
-    List.map separateSlash (String.split "," text)
-
-
-separateSlash : String -> List String
-separateSlash text =
-    List.sort (List.map String.trim (String.split "/" text))
-
-
-infinitive : List (List String) -> String
-infinitive words =
-    Maybe.withDefault "" (List.head (Maybe.withDefault [] (List.head words)))

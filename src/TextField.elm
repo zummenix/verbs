@@ -43,6 +43,7 @@ view config state text =
                 , ( "background-color", "transparent" )
                 , ( "color", "rgb(44,44,44)" )
                 , ( "font-size", "1.2em" )
+                , ( "font-family", "sans-serif" )
                 ]
             , onInput config.onInput
             , onKeyUp config.onKeyUp
