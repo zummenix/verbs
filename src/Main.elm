@@ -42,6 +42,7 @@ type Field
 type Msg
     = InitialSeed Random.Seed
     | OnInput Int String
+    | OnKeyUp Int Int
     | NoOp
 
 
@@ -100,7 +101,7 @@ viewField index field =
                 [ text verb ]
 
         Unknown text ->
-            TextField.view { onInput = (OnInput index), onKeyUp = \_ -> NoOp } TextField.Normal text
+            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Normal text
 
 
 viewPhrase : String -> Html Msg
@@ -156,6 +157,16 @@ update msg model =
 
                 Finished ->
                     model ! []
+
+        OnKeyUp index code ->
+            if code == 13 then
+                -- Enter
+                model ! []
+            else if code == 9 then
+                -- Tab
+                model ! []
+            else
+                model ! []
 
         NoOp ->
             model ! []
