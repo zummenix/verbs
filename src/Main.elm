@@ -6,6 +6,7 @@ import Html.Attributes exposing (style)
 import Time
 import Random
 import Task
+import Dom
 import Verbs
 import TextField
 import Game exposing (Game)
@@ -80,10 +81,18 @@ viewField : Int -> Field -> Html Msg
 viewField index field =
     case field of
         Known verb ->
-            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Static verb
+            TextField.view
+                (fieldID index)
+                { onInput = \_ -> NoOp, onKeyUp = \_ -> NoOp }
+                TextField.Static
+                verb
 
         Unknown verb ->
-            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Normal verb
+            TextField.view
+                (fieldID index)
+                { onInput = (OnInput index), onKeyUp = (OnKeyUp index) }
+                TextField.Normal
+                verb
 
 
 viewPhrase : String -> Html Msg
@@ -141,14 +150,27 @@ update msg model =
                     model ! []
 
         OnKeyUp index code ->
-            if code == 13 then
-                -- Enter
-                model ! []
-            else if code == 9 then
-                -- Tab
-                model ! []
-            else
-                model ! []
+            case model of
+                Ready gameState ->
+                    if code == 13 then
+                        -- Enter
+                        case Maybe.oneOf [ findAfter index (activeFields gameState), List.head (activeFields gameState) ] of
+                            Just i ->
+                                ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
+
+                            Nothing ->
+                                model ! []
+                    else if code == 9 then
+                        -- Tab
+                        model ! []
+                    else
+                        model ! []
+
+                Loading ->
+                    model ! []
+
+                Finished ->
+                    model ! []
 
         NoOp ->
             model ! []
@@ -159,9 +181,9 @@ fields game =
     case Game.currentRoundQuestion game of
         Just question ->
             let
-                field i text =
-                    if i == 0 || text == "-" then
-                        Known text
+                field i verb =
+                    if i == 0 || verb == "-" then
+                        Known verb
                     else
                         Unknown ""
             in
@@ -169,6 +191,38 @@ fields game =
 
         Nothing ->
             []
+
+
+activeFields : GameState -> List Int
+activeFields gameState =
+    let
+        check index field =
+            case field of
+                Known _ ->
+                    Nothing
+
+                Unknown _ ->
+                    Just index
+    in
+        List.filterMap identity (List.indexedMap check gameState.fields)
+
+
+findAfter : Int -> List Int -> Maybe Int
+findAfter value values =
+    case values of
+        x :: xs ->
+            if x == value then
+                List.head xs
+            else
+                findAfter value xs
+
+        _ ->
+            Nothing
+
+
+fieldID : Int -> String
+fieldID index =
+    ("field-" ++ (toString index))
 
 
 subscriptions : Model -> Sub Msg

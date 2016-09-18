@@ -2,7 +2,7 @@ module TextField exposing (Config, State(..), view)
 
 import Html exposing (div, text, p, input, Html, Attribute)
 import Html.Events exposing (onInput, on, keyCode)
-import Html.Attributes exposing (value, style, disabled)
+import Html.Attributes exposing (id, value, style, disabled)
 import Json.Decode
 
 
@@ -19,8 +19,8 @@ type alias Config msg =
     }
 
 
-view : Config msg -> State -> String -> Html msg
-view config state text =
+view : String -> Config msg -> State -> String -> Html msg
+view fieldID config state text =
     div
         [ style
             [ ( "margin", "10px" )
@@ -46,6 +46,7 @@ view config state text =
                 , ( "font-size", "1.2em" )
                 , ( "font-family", "sans-serif" )
                 ]
+            , id fieldID
             , onInput config.onInput
             , onKeyUp config.onKeyUp
             , value text
