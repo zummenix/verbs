@@ -23,13 +23,7 @@ main =
         }
 
 
-type Model
-    = Loading
-    | Ready GameState
-    | Finished
-
-
-type alias GameState =
+type alias Model =
     { game : Game
     , fields : List Field
     }
@@ -49,24 +43,13 @@ type Msg
 
 init : ( Model, Cmd Msg )
 init =
-    ( Loading, Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now )
+    ( { game = Game.initGame [], fields = [] }
+    , Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
+    )
 
 
 view : Model -> Html Msg
 view model =
-    case model of
-        Loading ->
-            viewPhrase "Loading..."
-
-        Ready gameState ->
-            viewGame gameState
-
-        Finished ->
-            viewPhrase "Congratulations!"
-
-
-viewGame : GameState -> Html Msg
-viewGame gameState =
     div
         [ style
             [ ( "margin", "auto" )
@@ -74,7 +57,7 @@ viewGame gameState =
             , ( "height", "auto" )
             ]
         ]
-        (List.indexedMap viewField gameState.fields)
+        (List.indexedMap viewField model.fields)
 
 
 viewField : Int -> Field -> Html Msg
@@ -95,29 +78,6 @@ viewField index field =
                 verb
 
 
-viewPhrase : String -> Html Msg
-viewPhrase phrase =
-    div
-        [ style
-            [ ( "margin", "auto" )
-            , ( "width", "240px" )
-            , ( "height", "auto" )
-            ]
-        ]
-        [ div
-            [ style
-                [ ( "padding-top", "100%" )
-                , ( "padding-bottom", "100%" )
-                , ( "text-align", "center" )
-                , ( "font-family", "sans-serif" )
-                , ( "font-size", "2em" )
-                , ( "color", "gray" )
-                ]
-            ]
-            [ text phrase ]
-        ]
-
-
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -126,51 +86,35 @@ update msg model =
                 game =
                     Game.initGame (Verbs.shuffled seed)
             in
-                Ready { game = game, fields = fields game } ! []
+                { game = game, fields = fields game } ! []
 
         OnInput index text ->
-            case model of
-                Ready gameState ->
-                    let
-                        updateField i field =
-                            if i == index then
-                                Unknown text
-                            else
-                                field
+            let
+                updateField i field =
+                    if i == index then
+                        Unknown text
+                    else
+                        field
 
-                        newFields =
-                            List.indexedMap updateField gameState.fields
-                    in
-                        Ready { game = gameState.game, fields = newFields } ! []
-
-                Loading ->
-                    model ! []
-
-                Finished ->
-                    model ! []
+                newFields =
+                    List.indexedMap updateField model.fields
+            in
+                { game = model.game, fields = newFields } ! []
 
         OnKeyUp index code ->
-            case model of
-                Ready gameState ->
-                    if code == 13 then
-                        -- Enter
-                        case Maybe.oneOf [ findAfter index (activeFields gameState), List.head (activeFields gameState) ] of
-                            Just i ->
-                                ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
+            if code == 13 then
+                -- Enter
+                case Maybe.oneOf [ findAfter index (activeFields model), List.head (activeFields model) ] of
+                    Just i ->
+                        ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
 
-                            Nothing ->
-                                model ! []
-                    else if code == 9 then
-                        -- Tab
+                    Nothing ->
                         model ! []
-                    else
-                        model ! []
-
-                Loading ->
-                    model ! []
-
-                Finished ->
-                    model ! []
+            else if code == 9 then
+                -- Tab
+                model ! []
+            else
+                model ! []
 
         NoOp ->
             model ! []
@@ -193,7 +137,7 @@ fields game =
             []
 
 
-activeFields : GameState -> List Int
+activeFields : Model -> List Int
 activeFields gameState =
     let
         check index field =
