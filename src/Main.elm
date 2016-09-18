@@ -80,28 +80,10 @@ viewField : Int -> Field -> Html Msg
 viewField index field =
     case field of
         Known verb ->
-            div
-                [ style
-                    [ ( "margin-top", "20px" )
-                    , ( "margin-bottom", "20px" )
-                    , ( "margin-left", "10px" )
-                    , ( "margin-right", "10px" )
-                    , ( "padding", "15px" )
-                    , ( "background-color", "rgb(250,241,192)" )
-                    , ( "border-color", "lightgray" )
-                    , ( "border-style", "solid" )
-                    , ( "border-radius", "4px" )
-                    , ( "border-width", "1px" )
-                    , ( "text-align", "center" )
-                    , ( "color", "rgb(44,44,44)" )
-                    , ( "font-size", "1.2em" )
-                    , ( "font-family", "sans-serif" )
-                    ]
-                ]
-                [ text verb ]
+            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Static verb
 
-        Unknown text ->
-            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Normal text
+        Unknown verb ->
+            TextField.view { onInput = (OnInput index), onKeyUp = (OnKeyUp index) } TextField.Normal verb
 
 
 viewPhrase : String -> Html Msg

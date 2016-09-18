@@ -2,7 +2,7 @@ module TextField exposing (Config, State(..), view)
 
 import Html exposing (div, text, p, input, Html, Attribute)
 import Html.Events exposing (onInput, on, keyCode)
-import Html.Attributes exposing (value, style)
+import Html.Attributes exposing (value, style, disabled)
 import Json.Decode
 
 
@@ -10,6 +10,7 @@ type State
     = Normal
     | Correct
     | Wrong
+    | Static
 
 
 type alias Config msg =
@@ -48,10 +49,10 @@ view config state text =
             , onInput config.onInput
             , onKeyUp config.onKeyUp
             , value text
+            , disabled (userInteractionDisabled state)
             ]
             []
         ]
-
 
 
 backgroundColor : State -> String
@@ -66,6 +67,9 @@ backgroundColor state =
         Wrong ->
             "rgba(240,0,0,0.05)"
 
+        Static ->
+            "rgb(250,241,192)"
+
 
 borderColor : State -> String
 borderColor state =
@@ -78,6 +82,19 @@ borderColor state =
 
         Wrong ->
             "rgb(220,0,0)"
+
+        Static ->
+            "lightgray"
+
+
+userInteractionDisabled : State -> Bool
+userInteractionDisabled state =
+    case state of
+        Static ->
+            True
+
+        _ ->
+            False
 
 
 onKeyUp : (Int -> msg) -> Attribute msg
