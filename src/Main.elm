@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html.App
 import Html exposing (div, text, Html, Attribute)
 import Html.Attributes exposing (style)
+import String
 import Time
 import Random
 import Task
@@ -86,7 +87,7 @@ update msg model =
                 game =
                     Game.initGame (Verbs.shuffled seed)
             in
-                { game = game, fields = fields game } ! []
+                focusOnFirstEmptyField { game = game, fields = fields game }
 
         OnInput index text ->
             let
@@ -104,19 +105,21 @@ update msg model =
         OnKeyUp index code ->
             if code == 13 then
                 -- Enter
-                case Maybe.oneOf [ findAfter index (activeFields model), List.head (activeFields model) ] of
-                    Just i ->
-                        ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
-
-                    Nothing ->
-                        model ! []
-            else if code == 9 then
-                -- Tab
-                model ! []
+                focusOnFirstEmptyField model
             else
                 model ! []
 
         NoOp ->
+            model ! []
+
+
+focusOnFirstEmptyField : Model -> ( Model, Cmd Msg )
+focusOnFirstEmptyField model =
+    case List.head (emptyFields model) of
+        Just i ->
+            ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
+
+        Nothing ->
             model ! []
 
 
@@ -137,31 +140,21 @@ fields game =
             []
 
 
-activeFields : Model -> List Int
-activeFields gameState =
+emptyFields : Model -> List Int
+emptyFields gameState =
     let
         check index field =
             case field of
                 Known _ ->
                     Nothing
 
-                Unknown _ ->
-                    Just index
+                Unknown verb ->
+                    if String.isEmpty verb then
+                        Just index
+                    else
+                        Nothing
     in
         List.filterMap identity (List.indexedMap check gameState.fields)
-
-
-findAfter : Int -> List Int -> Maybe Int
-findAfter value values =
-    case values of
-        x :: xs ->
-            if x == value then
-                List.head xs
-            else
-                findAfter value xs
-
-        _ ->
-            Nothing
 
 
 fieldID : Int -> String
