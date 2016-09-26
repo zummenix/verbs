@@ -27,6 +27,7 @@ main =
 type alias Model =
     { game : Game
     , fields : List Field
+    , status : Status
     }
 
 
@@ -35,16 +36,23 @@ type Field
     | Unknown String
 
 
+type Status
+    = Ready
+    | Error String
+    | Success String
+
+
 type Msg
     = InitialSeed Random.Seed
     | OnInput Int String
     | OnKeyUp Int Int
+    | Validate
     | NoOp
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( { game = Game.initGame [], fields = [] }
+    ( { game = Game.initGame [], fields = [], status = Ready }
     , Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
     )
 
@@ -58,7 +66,7 @@ view model =
             , ( "height", "auto" )
             ]
         ]
-        (List.indexedMap viewField model.fields)
+        ((List.indexedMap viewField model.fields) ++ (viewStatus model.status))
 
 
 viewField : Int -> Field -> Html Msg
@@ -79,6 +87,19 @@ viewField index field =
                 verb
 
 
+viewStatus : Status -> List (Html Msg)
+viewStatus status =
+    case status of
+        Ready ->
+            []
+
+        Error correct ->
+            [ text correct ]
+
+        Success correct ->
+            [ text correct ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -87,7 +108,7 @@ update msg model =
                 game =
                     Game.initGame (Verbs.shuffled seed)
             in
-                focusOnFirstEmptyField { game = game, fields = fields game }
+                focusOnFirstEmptyField { game = game, fields = fields game, status = model.status }
 
         OnInput index text ->
             let
@@ -100,7 +121,7 @@ update msg model =
                 newFields =
                     List.indexedMap updateField model.fields
             in
-                { game = model.game, fields = newFields } ! []
+                { game = model.game, fields = newFields, status = model.status } ! []
 
         OnKeyUp index code ->
             if code == 13 then
@@ -108,6 +129,21 @@ update msg model =
                 focusOnFirstEmptyField model
             else
                 model ! []
+
+        Validate ->
+            case Game.currentRoundQuestion model.game of
+                Just question ->
+                    let
+                        isCorrect =
+                            Question.validate (Question.words question) (answers model.fields)
+                    in
+                        if isCorrect then
+                            { model | status = Success question } ! []
+                        else
+                            { model | status = Error question } ! []
+
+                Nothing ->
+                    model ! []
 
         NoOp ->
             model ! []
@@ -120,7 +156,7 @@ focusOnFirstEmptyField model =
             ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
 
         Nothing ->
-            model ! []
+            ( model, Task.perform identity identity (Task.succeed Validate) )
 
 
 fields : Game -> List Field
@@ -155,6 +191,20 @@ emptyFields gameState =
                         Nothing
     in
         List.filterMap identity (List.indexedMap check gameState.fields)
+
+
+answers : List Field -> List String
+answers fields =
+    let
+        mapper field =
+            case field of
+                Known text ->
+                    text
+
+                Unknown text ->
+                    text
+    in
+        List.map mapper fields
 
 
 fieldID : Int -> String
