@@ -5,6 +5,7 @@ module Game
         , currentRoundQuestion
         , currentRoundPosition
         , nextRoundQuestion
+        , addToRepeat
         , numberOfRemainingRoundQuestions
         , numberOfRoundQuestions
         , numberOfRemainingQuestions
@@ -72,6 +73,15 @@ nextRoundQuestion (Game { questions, roundQuestions, roundPosition }) =
                         , roundQuestions = roundQuestionsNew
                         , roundPosition = 0
                         }
+
+
+addToRepeat : String -> Game -> Game
+addToRepeat question (Game { questions, roundQuestions, roundPosition }) =
+    Game
+        { questions = question :: questions
+        , roundQuestions = roundQuestions
+        , roundPosition = roundPosition + 1
+        }
 
 
 numberOfRemainingRoundQuestions : Game -> Int

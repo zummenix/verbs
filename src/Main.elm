@@ -3,6 +3,7 @@ module Main exposing (..)
 import Html.App
 import Html exposing (div, text, Html, Attribute)
 import Html.Attributes exposing (style)
+import Html.Events
 import String
 import Time
 import Random
@@ -38,7 +39,7 @@ type Field
 
 type Status
     = Ready
-    | Error String
+    | Error String (List String)
     | Success String
 
 
@@ -47,6 +48,7 @@ type Msg
     | OnInput Int String
     | OnKeyUp Int Int
     | Validate
+    | Next
     | NoOp
 
 
@@ -66,7 +68,74 @@ view model =
             , ( "height", "auto" )
             ]
         ]
-        ((List.indexedMap viewField model.fields) ++ (viewStatus model.status))
+        (case model.status of
+            Ready ->
+                ((List.indexedMap viewField model.fields) ++ [ viewActionButton "Check" Validate ])
+
+            Error correct answers ->
+                [ viewHelperText "You've answered:"
+                , viewWrongAnswer (String.join ", " answers)
+                , viewHelperText "but correct is:"
+                , viewCorrectAnswer correct
+                , viewActionButton "Next" Next
+                ]
+
+            Success correct ->
+                [ viewHelperText "You're correct:"
+                , viewCorrectAnswer correct
+                , viewActionButton "Next" Next
+                ]
+        )
+
+
+viewHelperText : String -> Html Msg
+viewHelperText line =
+    Html.p
+        [ style
+            [ ( "text-align", "center" )
+            , ( "color", "gray" )
+            , ( "font-family", "sans-serif" )
+            ]
+        ]
+        [ Html.em [] [ text line ] ]
+
+
+viewCorrectAnswer : String -> Html Msg
+viewCorrectAnswer =
+    viewAnswer "green"
+
+
+viewWrongAnswer : String -> Html Msg
+viewWrongAnswer =
+    viewAnswer "red"
+
+
+viewAnswer : String -> String -> Html Msg
+viewAnswer color answer =
+    Html.p
+        [ style
+            [ ( "text-align", "center" )
+            , ( "color", color )
+            , ( "font-family", "sans-serif" )
+            ]
+        ]
+        [ Html.strong [] [ text answer ] ]
+
+
+viewActionButton : String -> Msg -> Html Msg
+viewActionButton title action =
+    Html.p
+        [ style
+            [ ( "text-align", "right" )
+            , ( "margin", "10px" )
+            , ( "color", "gray" )
+            , ( "font-family", "sans-serif" )
+            ]
+        ]
+        [ Html.a
+            [ Html.Events.onClick action, Html.Attributes.href "#" ]
+            [ text title ]
+        ]
 
 
 viewField : Int -> Field -> Html Msg
@@ -85,19 +154,6 @@ viewField index field =
                 { onInput = (OnInput index), onKeyUp = (OnKeyUp index) }
                 TextField.Normal
                 verb
-
-
-viewStatus : Status -> List (Html Msg)
-viewStatus status =
-    case status of
-        Ready ->
-            []
-
-        Error correct ->
-            [ text correct ]
-
-        Success correct ->
-            [ text correct ]
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -140,10 +196,21 @@ update msg model =
                         if isCorrect then
                             { model | status = Success question } ! []
                         else
-                            { model | status = Error question } ! []
+                            { model
+                                | status = Error question (answers model.fields)
+                                , game = Game.addToRepeat question model.game
+                            }
+                                ! []
 
                 Nothing ->
                     model ! []
+
+        Next ->
+            let
+                game =
+                    Game.nextRoundQuestion model.game
+            in
+                focusOnFirstEmptyField { game = game, fields = fields game, status = Ready }
 
         NoOp ->
             model ! []
