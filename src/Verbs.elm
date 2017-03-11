@@ -3,13 +3,14 @@ module Verbs exposing (shuffled, ordered)
 import Array
 import Random
 import Random.Array
+import Tuple
 
 
 shuffled : Random.Seed -> List String
 shuffled seed =
     seed
         |> Random.step (Array.fromList ordered |> Random.Array.shuffle)
-        |> fst
+        |> Tuple.first
         |> Array.toList
 
 

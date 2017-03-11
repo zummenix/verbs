@@ -65,11 +65,11 @@ nextRoundQuestion (Game { questions, roundQuestions, roundPosition }) =
                     roundQuestionsNew =
                         List.take maxNumberOfQuestions allQuestions
 
-                    questions =
+                    newQuestions =
                         List.drop maxNumberOfQuestions allQuestions
                 in
                     Game
-                        { questions = questions
+                        { questions = newQuestions
                         , roundQuestions = roundQuestionsNew
                         , roundPosition = 0
                         }

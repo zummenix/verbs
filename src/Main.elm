@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html.App
+import Html
 import Html exposing (div, text, Html, Attribute)
 import Html.Attributes exposing (style)
 import Html.Events
@@ -15,9 +15,9 @@ import Game exposing (Game)
 import Question
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.App.program
+    Html.program
         { init = init
         , view = view
         , update = update
@@ -55,7 +55,7 @@ type Msg
 init : ( Model, Cmd Msg )
 init =
     ( { game = Game.initGame [], fields = [], status = Ready }
-    , Task.perform identity (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
+    , Task.perform (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
     )
 
 
@@ -220,10 +220,10 @@ focusOnFirstEmptyField : Model -> ( Model, Cmd Msg )
 focusOnFirstEmptyField model =
     case List.head (emptyFields model) of
         Just i ->
-            ( model, Task.perform (\_ -> NoOp) (\_ -> NoOp) (Dom.focus (fieldID i)) )
+            ( model, Task.attempt (\_ -> NoOp) (Dom.focus (fieldID i)) )
 
         Nothing ->
-            ( model, Task.perform identity identity (Task.succeed Validate) )
+            ( model, Task.perform identity (Task.succeed Validate) )
 
 
 fields : Game -> List Field
