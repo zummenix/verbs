@@ -126,18 +126,24 @@ viewAnswer color answer =
 
 viewActionButton : String -> Msg -> Html Msg
 viewActionButton title action =
-    Html.p
+    Html.button
         [ style
-            [ ( "text-align", "right" )
-            , ( "margin", "10px" )
-            , ( "color", "gray" )
-            , ( "font-family", "sans-serif" )
+            [ ( "border", "0" )
+            , ( "margin", "0 10px" )
+            , ( "float", "right" )
+            , ( "cursor", "pointer" )
+            , ( "font-size", "1.1em" )
+            , ( "font-weight", "200" )
+            , ( "background-color", "#0095dd" )
+            , ( "color", "#fff" )
+            , ( "text-transform", "uppercase" )
+            , ( "padding", "10px 30px" )
+            , ( "border-radius", "4px" )
+            , ( "box-shadow", "inset 0 -1px #bbbfc2" )
             ]
+        , Html.Events.onClick action
         ]
-        [ Html.a
-            [ Html.Events.onClick action, Html.Attributes.href "#" ]
-            [ text title ]
-        ]
+        [ text title ]
 
 
 viewField : Int -> Field -> Html Msg
