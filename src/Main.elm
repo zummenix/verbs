@@ -13,6 +13,7 @@ import Verbs
 import TextField
 import Game exposing (Game)
 import Question
+import Keyboard
 
 
 main : Program Never Model Msg
@@ -49,6 +50,7 @@ type Msg
     | OnKeyUp Int Int
     | Validate
     | Next
+    | KeyboardEnter
     | NoOp
 
 
@@ -212,6 +214,17 @@ update msg model =
             in
                 focusOnFirstEmptyField { game = game, fields = fields game, status = Ready }
 
+        KeyboardEnter ->
+            case model.status of
+                Ready ->
+                    model ! []
+
+                Error _ _ ->
+                    ( model, Task.perform identity (Task.succeed Next) )
+
+                Success _ ->
+                    ( model, Task.perform identity (Task.succeed Next) )
+
         NoOp ->
             model ! []
 
@@ -281,4 +294,10 @@ fieldID index =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Keyboard.ups
+        (\code ->
+            if code == 13 then
+                KeyboardEnter
+            else
+                NoOp
+        )
