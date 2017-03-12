@@ -1,7 +1,6 @@
-module GameTests exposing (main)
+module GameTests exposing (all)
 
 import Test exposing (..)
-import Test.Runner.Html
 import Expect
 import Game
     exposing
@@ -15,11 +14,6 @@ import Game
         , numberOfRemainingQuestions
         , maxNumberOfQuestions
         )
-
-
-main : Program Never
-main =
-    Test.Runner.Html.run all
 
 
 all : Test

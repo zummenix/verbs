@@ -1,14 +1,8 @@
-module GameTests exposing (main)
+module QuestionTests exposing (all)
 
 import Test exposing (..)
-import Test.Runner.Html
 import Expect
 import Question
-
-
-main : Program Never
-main =
-    Test.Runner.Html.run all
 
 
 all : Test
