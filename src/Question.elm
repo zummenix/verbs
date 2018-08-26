@@ -9,13 +9,13 @@ words question =
 
 
 validate : List (List String) -> List String -> Bool
-validate correctWords words =
+validate correctWords ws =
     let
         isOk ( components, word ) =
             List.member word components
     in
-    if List.length correctWords == List.length words then
-        List.all isOk (List.map2 (\a b -> ( a, b )) correctWords words)
+    if List.length correctWords == List.length ws then
+        List.all isOk (List.map2 (\a b -> ( a, b )) correctWords ws)
 
     else
         False

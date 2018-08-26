@@ -1,23 +1,23 @@
-module Main exposing (Field(..), Model, Msg(..), Status(..), answers, emptyFields, fieldID, fields, focusOnFirstEmptyField, init, main, subscriptions, update, view, viewActionButton, viewAnswer, viewCorrectAnswer, viewField, viewHelperText, viewWrongAnswer)
+module Main exposing (main)
 
-import Dom
+import Browser
+import Browser.Dom
 import Game exposing (Game)
 import Html exposing (Attribute, Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events
-import Keyboard
 import Question
 import Random
 import String
 import Task
 import TextField
-import Time
+import Time exposing (posixToMillis)
 import Verbs
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , view = view
         , update = update
@@ -53,10 +53,10 @@ type Msg
     | NoOp
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { game = Game.initGame [], fields = [], status = Ready }
-    , Task.perform (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
+    , Task.perform (\time -> posixToMillis time |> Random.initialSeed |> InitialSeed) Time.now
     )
 
 
@@ -71,9 +71,9 @@ view model =
             Ready ->
                 List.indexedMap viewField model.fields ++ [ viewActionButton "Check" Validate ]
 
-            Error correct answers ->
+            Error correct yourAnswers ->
                 [ viewHelperText "You've answered:"
-                , viewWrongAnswer (String.join ", " answers)
+                , viewWrongAnswer (String.join ", " yourAnswers)
                 , viewHelperText "but correct is:"
                 , viewCorrectAnswer correct
                 , viewActionButton "Next" Next
@@ -246,7 +246,7 @@ focusOnFirstEmptyField : Model -> ( Model, Cmd Msg )
 focusOnFirstEmptyField model =
     case List.head (emptyFields model) of
         Just i ->
-            ( model, Task.attempt (\_ -> NoOp) (Dom.focus (fieldID i)) )
+            ( model, Task.attempt (\_ -> NoOp) (Browser.Dom.focus (fieldID i)) )
 
         Nothing ->
             ( model, Task.perform identity (Task.succeed Validate) )
@@ -289,7 +289,7 @@ emptyFields gameState =
 
 
 answers : List Field -> List String
-answers fields =
+answers fs =
     let
         mapper field =
             case field of
@@ -299,21 +299,14 @@ answers fields =
                 Unknown text ->
                     text
     in
-    List.map mapper fields
+    List.map mapper fs
 
 
 fieldID : Int -> String
 fieldID index =
-    "field-" ++ toString index
+    "field-" ++ String.fromInt index
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Keyboard.ups
-        (\code ->
-            if code == 13 then
-                KeyboardEnter
-
-            else
-                NoOp
-        )
+    Sub.none
