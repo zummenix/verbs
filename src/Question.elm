@@ -1,4 +1,4 @@
-module Question exposing (words, validate)
+module Question exposing (validate, words)
 
 import String
 
@@ -11,13 +11,14 @@ words question =
 validate : List (List String) -> List String -> Bool
 validate correctWords words =
     let
-        isOk (components, word) =
+        isOk ( components, word ) =
             List.member word components
     in
-        if List.length correctWords == List.length words then
-            List.all isOk (List.map2 (,) correctWords words)
-        else
-            False
+    if List.length correctWords == List.length words then
+        List.all isOk (List.map2 (\a b -> ( a, b )) correctWords words)
+
+    else
+        False
 
 
 separateSlash : String -> List String

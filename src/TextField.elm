@@ -1,8 +1,8 @@
 module TextField exposing (Config, State(..), view)
 
-import Html exposing (div, text, p, input, Html, Attribute)
-import Html.Events exposing (onInput, on, keyCode)
-import Html.Attributes exposing (id, value, style, disabled)
+import Html exposing (Attribute, Html, div, input, p, text)
+import Html.Attributes exposing (disabled, id, style, value)
+import Html.Events exposing (keyCode, on, onInput)
 import Json.Decode
 
 
@@ -22,30 +22,26 @@ type alias Config msg =
 view : String -> Config msg -> State -> String -> Html msg
 view fieldID config state text =
     div
-        [ style
-            [ ( "margin", "10px" )
-            , ( "padding", "5px" )
-            , ( "background-color", backgroundColor state )
-            , ( "border-color", borderColor state )
-            , ( "box-shadow", "inset 0px 1px 3px 3px rgba(0,0,0,0.02)" )
-            , ( "border-style", "solid" )
-            , ( "border-radius", "4px" )
-            , ( "border-width", "1px" )
-            ]
+        [ style "margin" "10px"
+        , style "padding" "5px"
+        , style "background-color" (backgroundColor state)
+        , style "border-color" (borderColor state)
+        , style "box-shadow" "inset 0px 1px 3px 3px rgba(0,0,0,0.02)"
+        , style "border-style" "solid"
+        , style "border-radius" "4px"
+        , style "border-width" "1px"
         ]
         [ input
-            [ style
-                [ ( "padding", "5px" )
-                , ( "width", "100%" )
-                , ( "box-sizing", "border-box" )
-                , ( "text-align", "center" )
-                , ( "outline", "none" )
-                , ( "border", "none" )
-                , ( "background-color", "transparent" )
-                , ( "color", "rgb(44,44,44)" )
-                , ( "font-size", "1.2em" )
-                , ( "font-family", "sans-serif" )
-                ]
+            [ style "padding" "5px"
+            , style "width" "100%"
+            , style "box-sizing" "border-box"
+            , style "text-align" "center"
+            , style "outline" "none"
+            , style "border" "none"
+            , style "background-color" "transparent"
+            , style "color" "rgb(44,44,44)"
+            , style "font-size" "1.2em"
+            , style "font-family" "sans-serif"
             , id fieldID
             , onInput config.onInput
             , onKeyUp config.onKeyUp
