@@ -1,4 +1,4 @@
-module Verbs exposing (shuffled, ordered)
+module Verbs exposing (ordered, shuffled)
 
 import Array
 import Random

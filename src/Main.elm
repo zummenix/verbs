@@ -1,24 +1,23 @@
-module Main exposing (..)
+module Main exposing (main)
 
-import Html
-import Html exposing (div, text, Html, Attribute)
+import Browser
+import Browser.Dom
+import Game exposing (Game)
+import Html exposing (Attribute, Html, div, text)
 import Html.Attributes exposing (style)
 import Html.Events
-import String
-import Time
-import Random
-import Task
-import Dom
-import Verbs
-import TextField
-import Game exposing (Game)
 import Question
-import Keyboard
+import Random
+import String
+import Task
+import TextField
+import Time exposing (posixToMillis)
+import Verbs
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program
+    Browser.element
         { init = init
         , view = view
         , update = update
@@ -54,29 +53,27 @@ type Msg
     | NoOp
 
 
-init : ( Model, Cmd Msg )
-init =
+init : () -> ( Model, Cmd Msg )
+init _ =
     ( { game = Game.initGame [], fields = [], status = Ready }
-    , Task.perform (\time -> floor time |> Random.initialSeed |> InitialSeed) Time.now
+    , Task.perform (\time -> posixToMillis time |> Random.initialSeed |> InitialSeed) Time.now
     )
 
 
 view : Model -> Html Msg
 view model =
     div
-        [ style
-            [ ( "margin", "auto" )
-            , ( "width", "280px" )
-            , ( "height", "auto" )
-            ]
+        [ style "margin" "auto"
+        , style "width" "280px"
+        , style "height" "auto"
         ]
         (case model.status of
             Ready ->
-                ((List.indexedMap viewField model.fields) ++ [ viewActionButton "Check" Validate ])
+                List.indexedMap viewField model.fields ++ [ viewActionButton "Check" Validate ]
 
-            Error correct answers ->
+            Error correct yourAnswers ->
                 [ viewHelperText "You've answered:"
-                , viewWrongAnswer (String.join ", " answers)
+                , viewWrongAnswer (String.join ", " yourAnswers)
                 , viewHelperText "but correct is:"
                 , viewCorrectAnswer correct
                 , viewActionButton "Next" Next
@@ -93,11 +90,9 @@ view model =
 viewHelperText : String -> Html Msg
 viewHelperText line =
     Html.p
-        [ style
-            [ ( "text-align", "center" )
-            , ( "color", "gray" )
-            , ( "font-family", "sans-serif" )
-            ]
+        [ style "text-align" "center"
+        , style "color" "gray"
+        , style "font-family" "sans-serif"
         ]
         [ Html.em [] [ text line ] ]
 
@@ -115,11 +110,9 @@ viewWrongAnswer =
 viewAnswer : String -> String -> Html Msg
 viewAnswer color answer =
     Html.p
-        [ style
-            [ ( "text-align", "center" )
-            , ( "color", color )
-            , ( "font-family", "sans-serif" )
-            ]
+        [ style "text-align" "center"
+        , style "color" color
+        , style "font-family" "sans-serif"
         ]
         [ Html.strong [] [ text answer ] ]
 
@@ -127,20 +120,18 @@ viewAnswer color answer =
 viewActionButton : String -> Msg -> Html Msg
 viewActionButton title action =
     Html.button
-        [ style
-            [ ( "border", "0" )
-            , ( "margin", "0 10px" )
-            , ( "float", "right" )
-            , ( "cursor", "pointer" )
-            , ( "font-size", "1.1em" )
-            , ( "font-weight", "200" )
-            , ( "background-color", "#0095dd" )
-            , ( "color", "#fff" )
-            , ( "text-transform", "uppercase" )
-            , ( "padding", "10px 30px" )
-            , ( "border-radius", "4px" )
-            , ( "box-shadow", "inset 0 -1px #bbbfc2" )
-            ]
+        [ style "border" "0"
+        , style "margin" "0 10px"
+        , style "float" "right"
+        , style "cursor" "pointer"
+        , style "font-size" "1.1em"
+        , style "font-weight" "200"
+        , style "background-color" "#0095dd"
+        , style "color" "#fff"
+        , style "text-transform" "uppercase"
+        , style "padding" "10px 30px"
+        , style "border-radius" "4px"
+        , style "box-shadow" "inset 0 -1px #bbbfc2"
         , Html.Events.onClick action
         ]
         [ text title ]
@@ -159,7 +150,7 @@ viewField index field =
         Unknown verb ->
             TextField.view
                 (fieldID index)
-                { onInput = (OnInput index), onKeyUp = (OnKeyUp index) }
+                { onInput = OnInput index, onKeyUp = OnKeyUp index }
                 TextField.Normal
                 verb
 
@@ -172,27 +163,33 @@ update msg model =
                 game =
                     Game.initGame (Verbs.shuffled seed)
             in
-                focusOnFirstEmptyField { game = game, fields = fields game, status = model.status }
+            focusOnFirstEmptyField { game = game, fields = fields game, status = model.status }
 
         OnInput index text ->
             let
                 updateField i field =
                     if i == index then
                         Unknown text
+
                     else
                         field
 
                 newFields =
                     List.indexedMap updateField model.fields
             in
-                { game = model.game, fields = newFields, status = model.status } ! []
+            ( { game = model.game, fields = newFields, status = model.status }
+            , Cmd.none
+            )
 
         OnKeyUp index code ->
             if code == 13 then
                 -- Enter
                 focusOnFirstEmptyField model
+
             else
-                model ! []
+                ( model
+                , Cmd.none
+                )
 
         Validate ->
             case Game.currentRoundQuestion model.game of
@@ -201,29 +198,37 @@ update msg model =
                         isCorrect =
                             Question.validate (Question.words question) (answers model.fields)
                     in
-                        if isCorrect then
-                            { model | status = Success question } ! []
-                        else
-                            { model
-                                | status = Error question (answers model.fields)
-                                , game = Game.addToRepeat question model.game
-                            }
-                                ! []
+                    if isCorrect then
+                        ( { model | status = Success question }
+                        , Cmd.none
+                        )
+
+                    else
+                        ( { model
+                            | status = Error question (answers model.fields)
+                            , game = Game.addToRepeat question model.game
+                          }
+                        , Cmd.none
+                        )
 
                 Nothing ->
-                    model ! []
+                    ( model
+                    , Cmd.none
+                    )
 
         Next ->
             let
                 game =
                     Game.nextRoundQuestion model.game
             in
-                focusOnFirstEmptyField { game = game, fields = fields game, status = Ready }
+            focusOnFirstEmptyField { game = game, fields = fields game, status = Ready }
 
         KeyboardEnter ->
             case model.status of
                 Ready ->
-                    model ! []
+                    ( model
+                    , Cmd.none
+                    )
 
                 Error _ _ ->
                     ( model, Task.perform identity (Task.succeed Next) )
@@ -232,14 +237,16 @@ update msg model =
                     ( model, Task.perform identity (Task.succeed Next) )
 
         NoOp ->
-            model ! []
+            ( model
+            , Cmd.none
+            )
 
 
 focusOnFirstEmptyField : Model -> ( Model, Cmd Msg )
 focusOnFirstEmptyField model =
     case List.head (emptyFields model) of
         Just i ->
-            ( model, Task.attempt (\_ -> NoOp) (Dom.focus (fieldID i)) )
+            ( model, Task.attempt (\_ -> NoOp) (Browser.Dom.focus (fieldID i)) )
 
         Nothing ->
             ( model, Task.perform identity (Task.succeed Validate) )
@@ -253,10 +260,11 @@ fields game =
                 field i verb =
                     if i == 0 || verb == "-" then
                         Known verb
+
                     else
                         Unknown ""
             in
-                List.indexedMap field (List.map (Maybe.withDefault "") (List.map List.head (Question.words question)))
+            List.indexedMap field (List.map (Maybe.withDefault "") (List.map List.head (Question.words question)))
 
         Nothing ->
             []
@@ -273,14 +281,15 @@ emptyFields gameState =
                 Unknown verb ->
                     if String.isEmpty verb then
                         Just index
+
                     else
                         Nothing
     in
-        List.filterMap identity (List.indexedMap check gameState.fields)
+    List.filterMap identity (List.indexedMap check gameState.fields)
 
 
 answers : List Field -> List String
-answers fields =
+answers fs =
     let
         mapper field =
             case field of
@@ -290,20 +299,14 @@ answers fields =
                 Unknown text ->
                     text
     in
-        List.map mapper fields
+    List.map mapper fs
 
 
 fieldID : Int -> String
 fieldID index =
-    ("field-" ++ (toString index))
+    "field-" ++ String.fromInt index
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Keyboard.ups
-        (\code ->
-            if code == 13 then
-                KeyboardEnter
-            else
-                NoOp
-        )
+    Sub.none

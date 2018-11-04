@@ -1,16 +1,15 @@
-module Game
-    exposing
-        ( Game
-        , initGame
-        , currentRoundQuestion
-        , currentRoundPosition
-        , nextRoundQuestion
-        , addToRepeat
-        , numberOfRemainingRoundQuestions
-        , numberOfRoundQuestions
-        , numberOfRemainingQuestions
-        , maxNumberOfQuestions
-        )
+module Game exposing
+    ( Game
+    , addToRepeat
+    , currentRoundPosition
+    , currentRoundQuestion
+    , initGame
+    , maxNumberOfQuestions
+    , nextRoundQuestion
+    , numberOfRemainingQuestions
+    , numberOfRemainingRoundQuestions
+    , numberOfRoundQuestions
+    )
 
 
 type Game
@@ -30,7 +29,7 @@ initGame questions =
             , roundPosition = 0
             }
     in
-        nextRoundQuestion (Game game)
+    nextRoundQuestion (Game game)
 
 
 currentRoundQuestion : Game -> Maybe String
@@ -49,30 +48,30 @@ nextRoundQuestion (Game { questions, roundQuestions, roundPosition }) =
         roundQuestionsRemaining =
             List.drop 1 roundQuestions
     in
-        case List.head roundQuestionsRemaining of
-            Just _ ->
-                Game
-                    { questions = questions
-                    , roundQuestions = roundQuestionsRemaining
-                    , roundPosition = roundPosition + 1
-                    }
+    case List.head roundQuestionsRemaining of
+        Just _ ->
+            Game
+                { questions = questions
+                , roundQuestions = roundQuestionsRemaining
+                , roundPosition = roundPosition + 1
+                }
 
-            Nothing ->
-                let
-                    allQuestions =
-                        roundQuestionsRemaining ++ questions
+        Nothing ->
+            let
+                allQuestions =
+                    roundQuestionsRemaining ++ questions
 
-                    roundQuestionsNew =
-                        List.take maxNumberOfQuestions allQuestions
+                roundQuestionsNew =
+                    List.take maxNumberOfQuestions allQuestions
 
-                    newQuestions =
-                        List.drop maxNumberOfQuestions allQuestions
-                in
-                    Game
-                        { questions = newQuestions
-                        , roundQuestions = roundQuestionsNew
-                        , roundPosition = 0
-                        }
+                newQuestions =
+                    List.drop maxNumberOfQuestions allQuestions
+            in
+            Game
+                { questions = newQuestions
+                , roundQuestions = roundQuestionsNew
+                , roundPosition = 0
+                }
 
 
 addToRepeat : String -> Game -> Game
@@ -96,7 +95,7 @@ numberOfRoundQuestions (Game { roundQuestions, roundPosition }) =
 
 numberOfRemainingQuestions : Game -> Int
 numberOfRemainingQuestions (Game { questions, roundQuestions, roundPosition }) =
-    (List.length questions) + (List.length roundQuestions)
+    List.length questions + List.length roundQuestions
 
 
 maxNumberOfQuestions : Int
