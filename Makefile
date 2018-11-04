@@ -1,10 +1,12 @@
+output = "target/index.html"
+
 .PHONY: build clean open
 
 build:
-	elm make "src/Main.elm" --output "target/index.html"
+	elm make "src/Main.elm" --output $(output)
 
 open: build
-	open "target/index.html"
+	open $(output)
 
 clean:
 	rm -rf elm-stuff/
